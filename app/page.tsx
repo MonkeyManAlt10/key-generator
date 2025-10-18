@@ -1,103 +1,141 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useState, useEffect } from "react"
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+export default function HomePage() {
+  const [generatedKey, setGeneratedKey] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [hasGenerated, setHasGenerated] = useState(false)
+
+  useEffect(() => {
+    const generated = sessionStorage.getItem('keyGenerated')
+    if (generated === 'true') {
+      setHasGenerated(true)
+      setIsLoading(false)
+    } else {
+      generateKey()
+    }
+  }, [])
+
+  const generateKey = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch("/api/generate-key", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.key) {
+        setGeneratedKey(data.key)
+        setHasGenerated(true)
+        sessionStorage.setItem('keyGenerated', 'true')
+      } else {
+        setError(data.message || "Failed to generate key")
+      }
+    } catch (err) {
+      setError("Network error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const copyToClipboard = async () => {
+    if (generatedKey) {
+      try {
+        await navigator.clipboard.writeText(generatedKey)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      } catch (err) {
+        const textArea = document.createElement("textarea")
+        textArea.value = generatedKey
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textArea)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }
+    }
+  }
+
+  if (hasGenerated && !generatedKey) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center p-4">
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-full max-w-md border border-purple-500/30">
+          <div className="flex flex-col items-center justify-center gap-6 text-center">
+            <div className="text-purple-400 text-5xl mb-4">🔒</div>
+            <h2 className="text-2xl font-bold text-white">Session Expired</h2>
+            <p className="text-gray-300">You've already generated your one-time code. Please go through the access link again to generate a new one.</p>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center p-4">
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-full max-w-md border border-purple-500/30">
+          <div className="flex flex-col items-center justify-center gap-6 text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-500 border-t-transparent"></div>
+            <h2 className="text-2xl font-bold text-white">Generating Your Code...</h2>
+            <p className="text-gray-300">Please wait a moment</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center p-4">
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-full max-w-md border border-purple-500/30">
+          <div className="flex flex-col items-center justify-center gap-6 text-center">
+            <div className="text-red-400 text-5xl mb-4">❌</div>
+            <h2 className="text-2xl font-bold text-white">Error</h2>
+            <p className="text-red-400">{error}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center p-4">
+      <div className="bg-black/40 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-full max-w-md border border-purple-500/30">
+        <div className="w-full space-y-6">
+          <div className="text-center">
+            <div className="text-green-400 text-5xl mb-4">✅</div>
+            <h2 className="text-2xl font-bold text-white mb-2">Your One-Time Code</h2>
+            <p className="text-gray-300 text-sm mb-6">Copy this code and use it immediately</p>
+
+            <div className="bg-purple-950/50 p-6 rounded-xl border-2 border-purple-500/50 backdrop-blur-sm mb-6">
+              <code className="text-3xl font-mono text-purple-300 font-bold tracking-widest break-all select-all">
+                {generatedKey}
+              </code>
+            </div>
+          </div>
+
+          <button
+            onClick={copyToClipboard}
+            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-green-500/50 hover:shadow-green-500/70 hover:scale-105"
+          >
+            {copied ? "✅ Copied to Clipboard!" : "📋 Copy Code"}
+          </button>
+
+          <div className="text-xs text-amber-400 text-center bg-amber-500/10 p-4 rounded-xl border border-amber-500/30 backdrop-blur-sm">
+            <span className="font-bold">⚠️ IMPORTANT:</span> This code can only be used once and will expire. Save it now before leaving this page.
+          </div>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
