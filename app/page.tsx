@@ -73,7 +73,7 @@ export default function HomePage() {
           <div className="flex flex-col items-center justify-center gap-6 text-center">
             <div className="text-purple-400 text-5xl mb-4">🔒</div>
             <h2 className="text-2xl font-bold text-white">Session Expired</h2>
-            <p className="text-gray-300">You've already generated your one-time code. Please go through the access link again to generate a new one.</p>
+            <p className="text-gray-300">You have already generated your one-time code. Please go through the access link again to generate a new one.</p>
           </div>
         </div>
       </div>
